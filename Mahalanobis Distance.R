@@ -1,5 +1,6 @@
 #We will start with loading the appropriate libraries
 library(tidyverse)
+library(ROCR)
 
 #Next, we load the data. The data for this demonstration can be downloaded here: https://www.kaggle.com/mlg-ulb/creditcardfraud
 Transactions<-read.csv('creditcard.csv', header=TRUE, sep=',')
@@ -81,7 +82,7 @@ length(Match)
 
 #It correctly identified 436 fraudulent cases. However, that does not necessarily mean that it is a reliable method for identifying fraud!
 #https://www.r-bloggers.com/2020/01/area-under-the-precision-recall-curve/
-library(ROCR)
+
 rates<-prediction(MDclass, Transactions$Class)
 roc_result<-performance(rates,measure="tpr", x.measure="fpr")
 plot(roc_result, main="ROC Curve for identifying fraud",col="green")
