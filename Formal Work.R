@@ -17,6 +17,10 @@ Xbar <- colMeans(Data)
 Cov<- cov(Data)
 MD<-mahalanobis(Data, xbar, Cov)
 
+#Plot Mahalanobis distances
+Distance<-tibble('MD' = MD)
+ggplot(Distance)+geom_histogram(aes(MD), binwidth=100)
+
 #We have the squared distances, now we need to determine the cutoff value to assess the outliers. One method is to calculate the Chi-Squared value of the data at a specified quantile https://towardsdatascience.com/mahalonobis-distance-and-outlier-detection-in-r-cb9c37576d7d
 Cut <- qchisq(.975,ncol(Data))
 
@@ -44,4 +48,15 @@ if (MDclass[i] == 1){
 #Remove starter NA value
 Match<-na.omit(Match)
 
-#It correctly identified 436 fraudulent cases. 
+#It correctly identified 436 fraudulent cases. However, that does not necessarily mean that it is a reliable method for identifying fraud!
+#https://www.r-bloggers.com/2020/01/area-under-the-precision-recall-curve/
+library(ROCR)
+rates<-prediction(MDclass, Transactions$Class)
+roc_result<-performance(rates,measure="tpr", x.measure="fpr")
+plot(roc_result, main="ROC Curve for identifying fraud",col="green")
+lines(x = c(0,1), y = c(0,1), col="purple")
+
+rates<-prediction(MDclass, Transactions$Class)
+roc_result<-performance(rates,measure="prec", x.measure="rec")
+plot(roc_result, main="Precision-Recall Curve for identifying fraud",col="green")
+lines(x = c(0,1), y = c(0,1), col="purple")
