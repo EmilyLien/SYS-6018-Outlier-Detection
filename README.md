@@ -1,4 +1,4 @@
-# SYS-6012-Outliers
+# SYS-6018-Outliers
 
 This is a repository for the source code for the Medium article found at ### LINK ### that was originally written for a final group project. 
 
