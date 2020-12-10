@@ -53,6 +53,7 @@ if (MDclass[i] == 1){
 
 #Remove starter NA value
 Match<-na.omit(Match)
+length(Match)
 
 #It correctly identified 436 fraudulent cases. However, that does not necessarily mean that it is a reliable method for identifying fraud!
 #https://www.r-bloggers.com/2020/01/area-under-the-precision-recall-curve/
