@@ -10,16 +10,22 @@ Data<- Transactions %>% select(-Class)
 #Data Summary
 summary(Data)
 
-#Data visualizations?
+#Data visualizations
+plot(Data$Time, Data$Amount)
+plot(Data$V1, Data$Amount)
+plot(Data$V2, Data$Amount)
+plot(Data$V3, Data$Amount)
+plot(Data$V4, Data$Amount)
 
 #We're going to use the mahalanobis function from the stats package. As per the formula, we need the covariance matrix, and the x-bar for each column
 Xbar <- colMeans(Data)
 Cov<- cov(Data)
 MD<-mahalanobis(Data, xbar, Cov)
 
-#Plot Mahalanobis distances
+#Plotting Mahalanobis distances
 Distance<-tibble('MD' = MD)
-ggplot(Distance)+geom_histogram(aes(MD), binwidth=100)
+barplot(MD)
+ggplot(Distance, aes(x=MD)) + geom_density()
 
 #We have the squared distances, now we need to determine the cutoff value to assess the outliers. One method is to calculate the Chi-Squared value of the data at a specified quantile https://towardsdatascience.com/mahalonobis-distance-and-outlier-detection-in-r-cb9c37576d7d
 Cut <- qchisq(.975,ncol(Data))
