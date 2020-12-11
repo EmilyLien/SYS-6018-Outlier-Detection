@@ -49,10 +49,9 @@ MD<-mahalanobis(Data, Xbar, Cov)
 
 #Plotting Mahalanobis distances
 Distance<-tibble('MD' = MD)
-barplot(MD)
 ggplot(Distance, aes(x=MD)) + geom_density()
 
-#We have the squared distances, now we need to determine the cutoff value to assess the outliers. One method is to calculate the Chi-Squared value of the data at a specified quantile https://towardsdatascience.com/mahalonobis-distance-and-outlier-detection-in-r-cb9c37576d7d
+#We have the squared distances, now we need to determine the cutoff value to assess the outliers. One method is to calculate the Chi-Squared value of the data at a specified quantile, as shown in: https://towardsdatascience.com/mahalonobis-distance-and-outlier-detection-in-r-cb9c37576d7d
 Cut <- qchisq(.975,ncol(Data))
 
 #Now we assess how many outliers there are
