@@ -1,0 +1,133 @@
+---
+title: "Outlier Detection"
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r packages, include=FALSE}
+#- Better table printing
+## https://haozhu233.github.io/kableExtra/awesome_table_in_html.html
+library(kableExtra) 
+format_table <- function(x, nmax=10) {
+  kable(x) %>% 
+    kable_styling(full_width = FALSE, font_size=11, position = "left") %>% 
+    {if(nrow(x) > nmax) scroll_box(., width = "100%", height = "200px") else .}
+}
+#- useful functions
+digits <- function(x, k=2) format(round(x, k), nsmall=k)
+
+#- required functions
+library(tidyverse)
+library(MASS)
+library(LAM)
+```
+
+```{r}
+data = read.csv('creditcard.csv', stringsAsFactors=FALSE)
+n = nrow(data)
+c = ncol(data)
+sigma = cov(data)
+mus = colMeans(data)
+head(data)
+```
+
+```{r}
+library(stats)
+
+#-- log likelihood ratio test statistic
+
+# MLE
+L.mle = dmultinom(Y, prob=Y/sum(Y), log=TRUE)
+L.null = dmultinom(Y, prob=dbenford(1:9), log=TRUE)
+llr.mle = L.mle - L.null   # log-likelihood ratio
+
+```
+
+```{r}
+
+## extract_first_digit() 
+#  Extracts the first digit (natural number [1-9])
+#  ignores negative signs, decimals, zeros, etc
+#  x: vector of numbers (could contain characters)
+#  type: either "factor" or "integer". Returns vector of this type.
+#  Returns a vector of first digits. The default is to return a factor with 
+#   levels 1:9 to ensure further analysis is not affected by missing levels.
+extract_first_digit <- function(x, type="factor"){
+  d = stringr::str_extract(x, "[1-9]")           # extract first natural number
+  if(type == "factor") d = factor(d, levels=1:9) # convert to factor with levels 1:9
+  else if (type == "integer") d = as.integer(d)  # convert to an integer
+  return(d)
+}
+
+#-- dbenford()
+# PMF for Benford's distrubtion
+# x: vector of natural numbers (positive integers)
+# for 1 digit: x in 1,2, ... 9
+# for 2 digits: x in 10, 11, ... 99
+dbenford <- function(x) log10(1+1/x)
+
+
+#-- rbenford()
+# simulate data from Benford's distribution
+# n: number of observations
+# digits: number of digits
+# seed: use number to ensure exact replication
+rbenford <- function(n, digits=1, seed=NULL){
+  if(!is.null(seed)) set.seed(seed)
+  x = 10^(digits-1):(10^digits - 1)
+  p = dbenford(x)
+  sample(x, size=n, replace=TRUE, prob=p)
+}
+
+
+datacols = data[, 1:30]
+datacols = datacols %>% sapply(extract_first_digit)
+df = as.data.frame(datacols)
+
+levels=c("0","1","2","3","4","5","6","7","8","9") #all unique values in df
+out <- sapply(levels,function(x)rowSums(df==x)) #count occurrences of x in each row
+colnames(out) <- levels
+outdf = as.data.frame(out)
+
+outdf$fraud = data[,31]
+outdf <- na.omit(outdf) 
+
+out_sums = outdf %>% group_by(fraud) %>% 
+  summarise(across(everything(), list(sum = sum)))
+  #summarise_all(list(sum))
+
+out_s_transpose <- as.data.frame(t(as.matrix(out_sums)))
+names(out_s_transpose) <- c("Legit", "Fraud")
+out_s_transpose = out_s_transpose[3:11, ]
+out_s_transpose$lead_dig = c("1","2","3","4","5","6","7","8","9")
+
+out_melt = out_s_transpose %>% gather("id", "value", -lead_dig)
+
+ggplot(out_s_transpose, aes(x=lead_dig, y=Legit)) +
+  geom_bar(stat="identity", position = position_dodge())
+
+
+ggplot(out_s_transpose, aes(x=lead_dig, y=Fraud)) +
+  geom_bar(stat="identity", position = position_dodge())
+```
+
+```{r}
+#############################################################################
+# EXAMPLE 1: Multivariate normal distribution
+#############################################################################
+
+set.seed(9875)
+# dat <- MASS::mvrnorm( n, mus, sigma )
+# colnames(dat) <- paste0("Y",1:3)
+# S <- stats::cov(dat)
+# M <- colMeans(dat)
+
+#--- evaulate likelihood
+res1 <- LAM::loglike_mvnorm( M=M, S=S, mu=mu, Sigma=Sigma, n=N, lambda=0 )
+# compare log likelihood with somewhat regularized covariance matrix
+res2 <- LAM::loglike_mvnorm( M=M, S=S, mu=mu, Sigma=Sigma, n=N, lambda=1 )
+print(res1)
+print(res2)
+
+```
